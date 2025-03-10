@@ -259,6 +259,10 @@ body {
 
     .container .tasks .item::before {
         left: 0;
-        top: -8px;
+        /* top: -8px; */
+        left: -11px;
+        width: 7px;
+        height: 21px;
+        
     }
 }
