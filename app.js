@@ -255,7 +255,8 @@ function swap(ele, t){
     getDataFromStorage(false);
 }
 let drag = false;
-document.addEventListener("mousedown", (doc)=>{
+// document.addEventListener("pointerup")
+document.addEventListener("pointerdown", (doc)=>{
     let element = doc.target.className == "del" ? null : doc.target.parentElement;
     // console.log(doc.target)
     if(element.className == "item"){
@@ -264,28 +265,17 @@ document.addEventListener("mousedown", (doc)=>{
         drag = true;
         element.style.cursor = "move";
         let top = element.offsetTop;
-        element.addEventListener("mousemove", (e)=>{
+        element.addEventListener("pointermove", (e)=>{
             let y = e.clientY;
             setZ(item);
             element.style.zIndex = 100;
             let t = parseInt(element.style.top);
             if(drag) moving(y, top,element,t);
-            // console.log(t);
-            // if(t > 10){
-            //     element.nextElementSibling.style.transition = "all 0.3s linear"
-            //     element.nextElementSibling.style.backgroundColor = "#adadadd4";
-            //     element.nextElementSibling.style.scale = "1.024"
-            // }
-            // if(t < 10){
-            //     element.nextElementSibling.style.transition = "none";
-            //     element.nextElementSibling.style.backgroundColor = "white";
-            //     element.nextElementSibling.style.scale = "1"
-            // }
         })
-        element.addEventListener("mouseleave", ()=> {
+        element.addEventListener("pointerleave", ()=> {
             drag = false;
         });
-        element.addEventListener("mouseup", ()=> {
+        element.addEventListener("pointerup", ()=> {
             item.forEach((e)=>{
                 e.style.cursor = "auto";
                 //e.style.top = 0
@@ -301,7 +291,7 @@ document.addEventListener("mousedown", (doc)=>{
     }
 })
 
-document.addEventListener("mouseup",()=> {
+document.addEventListener("pointerup",()=> {
     drag = false;
     document.querySelectorAll(".item").forEach((e)=>{
         e.style.top = 0;
@@ -321,28 +311,7 @@ window.onload = ()=>{
         first();
     }
 }
-// 67 control  117 u
-// let ctrl = false;
-// let u = false;
-// document.addEventListener("keydown", (e)=>{
-//     if(e.key.charCodeAt() == 67){
-//         ctrl = true;
-//     }
-//     if(e.key.charCodeAt() == 117){
-//         u = true;
-//     }
-//     if(ctrl && u){
-//         alert("you pressed ctrl + u")
-//         e.preventDefault();
-//     }
-// });
-// document.addEventListener("keyup",(e)=>{
-//     // ctrl =false;
-//     // u = false;
-//     if(e.key.charCodeAt() == 67) ctrl = false;
-//     if(e.key.charCodeAt() == 117) u = false;
-//     console.log(ctrl, u)
-// })
+
 
 let set = new Set([1,1,2,3,4]);
 
