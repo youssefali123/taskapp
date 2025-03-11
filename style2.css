@@ -145,6 +145,7 @@ body {
     justify-content: space-between;
     align-items: center;
     position: relative;
+    touch-action:none;
 }
 
 .container .tasks .item::before {
