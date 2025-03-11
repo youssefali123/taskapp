@@ -205,36 +205,17 @@ add.addEventListener("click", ()=>{
     }
     }
 });
-
+document.addEventListener("keypress", (e)=>{
+    if(e.key == "Enter") add.click();
+})
 // moving
-function moving(y, top, element,t){
-    let next = t == Math.abs(t) ? element.nextElementSibling : element.previousElementSibling;
-    let h = element.offsetHeight / 2;
-    let length = `${(y-h) - top}`;
-    element.style.top = `${length}px`;
-    // console.log("len ", length)
-    if(Math.abs(t) > 10){
-        next.style.transition = "all 0.3s linear"
-        next.style.backgroundColor = "#adadadd4";
-        next.style.scale = "1.024"
-    }
-    if(Math.abs(t) > 37){
-        next.style.backgroundColor = "rgb(98, 184, 93)";
-    }
-    if(Math.abs(t) < 10){
-        next.style.transition = "none";
-        next.style.backgroundColor = "white";
-        next.style.scale = "1"
-    }
-}
-
 function setZ(e){
     e.forEach( (i)=>{
         i.style.zIndex = 1; 
     })
 }
 
-function swap(ele, t){
+export function swap(ele, t){
     let nextEle = t == Math.abs(t) ? ele.nextElementSibling : ele.previousElementSibling;
     let curId = ele.id;
     let nexId = nextEle.id;
@@ -254,28 +235,71 @@ function swap(ele, t){
     window.localStorage.data = JSON.stringify(mydata);
     getDataFromStorage(false);
 }
+function moving(y, top, element,t, x, y2){
+    // abs(t)
+    let next = y2 == Math.abs(y2) ? element.nextElementSibling : element.previousElementSibling;
+    let h = element.offsetHeight / 2;
+    let length = `${(y-h) - top}`;
+    // element.style.top = `${length}px`;
+    // element.style.top = `${y2}px`
+    // element.style.left = `${x}px`
+
+    element.style.transform = `translate(${0}px, ${y2}px)`;
+    console.log(y2)
+
+    // console.log("len ", length)
+    // y2 >> Math.abs(t)
+    if(Math.abs(y2) > 10){
+        next.style.transition = "all 0.3s linear"
+        next.style.backgroundColor = "#adadadd4";
+        next.style.scale = "1.024"
+    }
+    if(Math.abs(y2) > 37){
+        next.style.backgroundColor = "rgb(98, 184, 93)";
+    }
+    if(Math.abs(y2) < 10){
+        next.style.transition = "none";
+        next.style.backgroundColor = "white";
+        next.style.scale = "1"
+    }
+}
+
 let drag = false;
-// document.addEventListener("pointerup")
+let initialPointerX, initialPointerY, initialTranslateX, initialTranslateY;
+let currentX = 0;
+let currentY = 0;
 document.addEventListener("pointerdown", (doc)=>{
+    doc.preventDefault();
     let element = doc.target.className == "del" ? null : doc.target.parentElement;
-    // console.log(doc.target)
     if(element.className == "item"){
+        initialPointerX = doc.clientX;
+        initialPointerY = doc.clientY;
+        initialTranslateX = currentX;
+        initialTranslateY = currentY; 
         let item = document.querySelectorAll(".item");
-        
         drag = true;
         element.style.cursor = "move";
         let top = element.offsetTop;
         element.addEventListener("pointermove", (e)=>{
-            let y = e.clientY;
-            setZ(item);
-            element.style.zIndex = 100;
-            let t = parseInt(element.style.top);
-            if(drag) moving(y, top,element,t);
+            
+            // if(drag) moving(y, top,element,t);
+            if(drag){
+                const deltaX = e.clientX - initialPointerX;
+                const deltaY = e.clientY - initialPointerY;
+                currentX = initialTranslateX + deltaX;
+                currentY = initialTranslateY + deltaY;
+                let y = e.clientY;
+                setZ(item);
+                element.style.zIndex = 100;
+                let t = parseInt(element.style.top);
+                moving(y, top,element,t , currentX, currentY);
+            }
         })
         element.addEventListener("pointerleave", ()=> {
             drag = false;
         });
         element.addEventListener("pointerup", ()=> {
+            console.log("up ",currentY);
             item.forEach((e)=>{
                 e.style.cursor = "auto";
                 //e.style.top = 0
@@ -285,20 +309,29 @@ document.addEventListener("pointerdown", (doc)=>{
             });
             element.style.cursor = "auto";
             let t = parseInt(element.style.top);
-            if( Math.abs(t) > 37) swap(element, t);
-            if(t > 0 || t < 0) element.style.top = 0;
+            // myY = currentY;
+            // myEle = element;
+            if( Math.abs(currentY) > 37) swap(element, currentY);
+            if(Math.abs(currentY) > 0 || Math.abs(currentY) < 0) element.style.transform = "translate(0,0)";
     })
     }
 })
-
+// let myY;
+// let myEle;
 document.addEventListener("pointerup",()=> {
+    currentX = 0;
+    currentY = 0;
     drag = false;
     document.querySelectorAll(".item").forEach((e)=>{
-        e.style.top = 0;
+        e.style.transform = translate(0,0);
         e.style.backgroundColor = "white";
         e.style.scale = "1";
         e.style.cursor = "auto"
+        e.style.transform = "translate(0,0)"
     })
+});
+document.addEventListener('pointercancel', () => {
+    drag = false;
 });
 
 window.onload = ()=>{
