@@ -32,7 +32,11 @@ function addItem(Mytile){
     edit.classList.add("edit");
     right.appendChild(edit)
     right.appendChild(del);
-    title.innerHTML = Mytile;
+    let move = document.createElement("div");
+    move.innerHTML = "="
+    move.classList.add("move");
+    title.appendChild(move);
+    title.appendChild(document.createTextNode(Mytile));
     item.appendChild(title);
     item.appendChild(right);
     tasks.appendChild(item);
@@ -63,9 +67,15 @@ function getDataFromStorage(check = true){
         let edit = document.createElement("span");
         edit.innerHTML = "edit";
         edit.classList.add("edit");
+        let move = document.createElement("div");
+        move.innerHTML = "=";
+        move.classList.add("move");
+        title.appendChild(move);
+        title.appendChild(document.createTextNode(data[i].title));
+        item.appendChild(title);
         right.appendChild(edit)
         right.appendChild(del);
-        title.innerHTML = data[i].title;
+        // title.innerHTML = data[i].title;
         item.appendChild(title);
         item.appendChild(right);
         tasks.appendChild(item);
@@ -84,11 +94,12 @@ function removeItem(id){
         window.localStorage.setItem("data", JSON.stringify(mydata));
     }
 }
-function removeAnim(id){
+function removeAnim(id, left = 0){
     let item = document.querySelector(`#${id}`);
     let width = item.offsetWidth;
+    let x = (width + 10) - left;
     gsap.to(`#${id}`,{
-        x: -(width+10),
+        x: x,
         duration: 0.4,
         opacity: 0.5,
         ease: "power1.inOut"
@@ -100,18 +111,21 @@ function first(){
     noTask.style.color = "rgb(251, 127, 12)";
     tasks.appendChild(noTask);
 }
-
-document.addEventListener("click" , (e)=>{
-    if(e.target.className == "del"){
-        let id = e.target.parentElement.parentElement.id;
-        removeAnim(id);
+function remove(id,e, dur, left = 0){
+        removeAnim(id , left);
         removeItem(id);
         setTimeout(()=>{
-            e.target.parentElement.parentElement.remove();
+            e.remove();
             if(mydata.length == 0){
                 first();
             }
-        }, 300)
+        }, dur)
+}
+document.addEventListener("click" , (e)=>{
+    if(e.target.className == "del"){
+        let id = e.target.parentElement.parentElement.id;
+        let element = e.target.parentElement.parentElement;
+        remove(id, element, 300);
     }
     if(e.target.className == "edit"){
         let id = e.target.parentElement.parentElement.id;
@@ -209,7 +223,7 @@ document.addEventListener("keypress", (e)=>{
     if(e.key == "Enter") add.click();
 })
 // moving
-function setZ(e){
+export function setZ(e){
     e.forEach( (i)=>{
         i.style.zIndex = 1; 
     })
@@ -218,9 +232,11 @@ function setZ(e){
 export function swap(ele, t){
     let nextEle = t == Math.abs(t) ? ele.nextElementSibling : ele.previousElementSibling;
     let curId = ele.id;
-    let nexId = nextEle.id;
-    // console.log("cur: ", curId, " nex: ", nexId);
+    let nexId;
+
     let indexC, indexN;
+    if(nextEle){
+        nexId = nextEle.id;
     for(let i = 0; i < mydata.length;i++){
         if(mydata[i].id == curId){
             indexC = i;
@@ -229,48 +245,90 @@ export function swap(ele, t){
             indexN = i;
         }
     }
+}
     if(indexC || indexN){
         [ mydata[indexC], mydata[indexN] ] = [ mydata[indexN], mydata[indexC] ];
     }
     window.localStorage.data = JSON.stringify(mydata);
     getDataFromStorage(false);
 }
-function moving(y, top, element,t, x, y2){
+function myKey(bool = false){
+    document.addEventListener("keydown", (e)=>{
+        console.log(e.ctrlKey);
+        if(e.key == "Control"){
+            bool = true;
+        }
+    })
+    document.addEventListener("keyup", (e)=>{
+        bool = false;
+    })
+    return bool;
+}
+myKey();
+function moving(element, dir, myTarget = 0){
+    // console.log("moving up ", dir.y)
     // abs(t)
-    let next = y2 == Math.abs(y2) ? element.nextElementSibling : element.previousElementSibling;
+    let l = `${element.style.transform}`;
+    let x = Boolean(l) ? parseInt(l.split("(")[1].split(",")[0]) : dir.x;  
+    let y = Boolean(l) ? parseInt(l.split("(")[1].split(",")[1].split(")")[0]) : dir.y;
+
+    function replace(){
+    let next = dir.y == Math.abs(dir.y) ? element.nextElementSibling : element.previousElementSibling;
     let h = element.offsetHeight / 2;
-    let length = `${(y-h) - top}`;
-    // element.style.top = `${length}px`;
-    // element.style.top = `${y2}px`
-    // element.style.left = `${x}px`
-
-    element.style.transform = `translate(${0}px, ${y2}px)`;
-    console.log(y2)
-
-    // console.log("len ", length)
-    // y2 >> Math.abs(t)
-    if(Math.abs(y2) > 10){
+    // let length = `${(y-h) - top}`
+        // element.style.transform = `translate(${dir.x}px, ${0}px)`;
+    if(myTarget){
+        element.style.transform = `translate(${0}px, ${dir.y}px)`
+    }else{
+        element.style.transform = `translate(${dir.x}px, ${0}px)`
+    }
+    
+    // console.log(y)
+    if(next){
+    if(Math.abs(y) > 10){
         next.style.transition = "all 0.3s linear"
         next.style.backgroundColor = "#adadadd4";
         next.style.scale = "1.024"
     }
-    if(Math.abs(y2) > 37){
+    if(Math.abs(y) > 37){
         next.style.backgroundColor = "rgb(98, 184, 93)";
     }
-    if(Math.abs(y2) < 10){
+    if(Math.abs(y) < 10){
         next.style.transition = "none";
         next.style.backgroundColor = "white";
         next.style.scale = "1"
     }
 }
-
+}
+    replace();
+}
+function ctrl(){
+    let bool = false;
+    document.addEventListener("keydown", (e)=>{
+        console.log(e.ctrlKey);
+        if(e.key == "Control"){
+            bool = true;
+        }
+    })
+    document.addEventListener("keyup", (e)=>{
+        bool = false;
+    })
+    return bool;
+}
+console.log(ctrl())
 let drag = false;
 let initialPointerX, initialPointerY, initialTranslateX, initialTranslateY;
 let currentX = 0;
 let currentY = 0;
 document.addEventListener("pointerdown", (doc)=>{
     doc.preventDefault();
-    let element = doc.target.className == "del" ? null : doc.target.parentElement;
+    // let element = doc.target.className == "del" ? null : doc.target.parentElement;
+    // let element = doc.target.className == "move" ? doc.target.parentElement.parentElement : (doc.target.className == "del" ? null : doc.target.parentElement);
+    let myTarget = {move: doc.target.className == "move" ? true : false, del: doc.target.parentElement.className == "del" ? true : false};
+    let element = myTarget.move ? doc.target.parentElement.parentElement : (myTarget.del ? null : doc.target.parentElement);
+    console.log("element ", element);
+    console.log("myTarget ", myTarget);
+    console.log("ele ", doc.target.parentElement.className);
     if(element.className == "item"){
         initialPointerX = doc.clientX;
         initialPointerY = doc.clientY;
@@ -281,25 +339,32 @@ document.addEventListener("pointerdown", (doc)=>{
         element.style.cursor = "move";
         let top = element.offsetTop;
         element.addEventListener("pointermove", (e)=>{
-            
-            // if(drag) moving(y, top,element,t);
             if(drag){
                 const deltaX = e.clientX - initialPointerX;
                 const deltaY = e.clientY - initialPointerY;
                 currentX = initialTranslateX + deltaX;
                 currentY = initialTranslateY + deltaY;
-                let y = e.clientY;
                 setZ(item);
                 element.style.zIndex = 100;
                 let t = parseInt(element.style.top);
-                moving(y, top,element,t , currentX, currentY);
+                let dir = {x:currentX, y:currentY};
+                moving(element, dir, myTarget.move);
             }
         })
         element.addEventListener("pointerleave", ()=> {
             drag = false;
         });
         element.addEventListener("pointerup", ()=> {
-            console.log("up ",currentY);
+            console.log("up ",currentX);
+            moving(element, {x:currentX, y:currentY});
+            if(Math.abs(currentX) > (element.offsetWidth / 2 + 10)){
+                //element.remove();
+                //removeItem(element.id);
+                element.style.left = `${currentX}px`;
+                remove(element.id, element, 300, Math.abs(currentX));
+            }else{
+                element.style.transform = "translate(0,0)"
+            }
             item.forEach((e)=>{
                 e.style.cursor = "auto";
                 //e.style.top = 0
@@ -309,21 +374,18 @@ document.addEventListener("pointerdown", (doc)=>{
             });
             element.style.cursor = "auto";
             let t = parseInt(element.style.top);
-            // myY = currentY;
-            // myEle = element;
             if( Math.abs(currentY) > 37) swap(element, currentY);
             if(Math.abs(currentY) > 0 || Math.abs(currentY) < 0) element.style.transform = "translate(0,0)";
     })
     }
 })
-// let myY;
-// let myEle;
+
 document.addEventListener("pointerup",()=> {
     currentX = 0;
     currentY = 0;
     drag = false;
     document.querySelectorAll(".item").forEach((e)=>{
-        e.style.transform = translate(0,0);
+        e.style.transform = "translate(0,0)";
         e.style.backgroundColor = "white";
         e.style.scale = "1";
         e.style.cursor = "auto"
@@ -381,8 +443,45 @@ console.log(string.match(reg));
 
 // for scrolling
 
-document.addEventListener('touchmove', function(event) {
-    if (event.touches.length > 1) {
-        event.preventDefault();
+function popUp(){
+    input.blur();
+    document.body.style.overflow = "hidden";
+    // document.body.style.height = "100vh";
+    // document.body.style.width = "100%";
+    // document.body.style.position = "fixed";
+
+    let mainDiv = document.createElement("div");
+    mainDiv.classList.add("mainDiv");
+    mainDiv.style.top = `${window.scrollY}px`;
+    let innerDiv = document.createElement("div");
+    innerDiv.classList.add("innerDiv");
+    mainDiv.appendChild(innerDiv);
+    document.body.appendChild(mainDiv);
+    
+}
+
+document.addEventListener("scroll", (e)=>{
+    if(window.scrollY > 80000000){
+        popUp();
+        console.log("scrolling", window.scrollY);
+    }else{
+        // document.body.style.overflow = "scroll";
+        // document.body.style.height = "auto";
+        // document.body.style.width = "auto";
+        // document.body.style.position = "relative";
+        // document.querySelector(".mainDiv").remove();
     }
-}, { passive: false });
+})
+document.addEventListener("keypress", (e)=>{
+    if(e.key == "v"){
+        document.addEventListener("scroll", (e)=>{
+            e.preventDefault();
+        })
+        popUp();
+    }   
+    })  
+    document.addEventListener('touchmove', function(event) {
+        if (event.touches.length > 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });      
